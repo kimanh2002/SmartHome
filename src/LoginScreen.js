@@ -1,123 +1,130 @@
-import React from 'react';
-import { Text, View, StyleSheet, Image, KeyboardAvoidingView, TextInput, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-class LoginScreen extends React.Component {
-  constructor(props) {
-    super(props);
+import React, { useState, useEffect } from 'react';
+import { Text, View, StyleSheet, Image, KeyboardAvoidingView, TouchableOpacity} from 'react-native';
+import { Input } from 'react-native-elements';
+import { LinearGradient } from 'expo-linear-gradient';
+import {AsyncStorage} from '@react-native-async-storage/async-storage';
+import logo from '../assets/logo.jpg';
+const LoginScreen = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberLogin, setRememberLogin] = useState(false);
+  const [loginError, setLoginError] = useState(false);
 
-    this.state = {
-      email: '',
-      password: '',
-      rememberLogin: false,
-      loginError: false
-    };
-  }
-
-  componentDidMount() {
+  useEffect(() => {
     // Load saved login info from storage (if any)
-    AsyncStorage.getItem('email').then(email => {
-      if (email) {
-        this.setState({ email });
+    async function loadLoginInfo() {
+      try {
+        const savedEmail = await AsyncStorage.getItem('email');
+        const savedPassword = await AsyncStorage.getItem('password');
+
+        if (savedEmail && savedPassword) {
+          setEmail(savedEmail);
+          setPassword(savedPassword);
+        }
+      } catch (error) {
+        console.log(error);
       }
-    });
-    AsyncStorage.getItem('password').then(password => {
-      if (password) {
-        this.setState({ password });
-      }
-    });
-  }
+    }
 
-  // load lại đăng nhập nếu đã lưu thông tin đăng nhập trước đó 
-  handleEmailChange = (email) => {
-    this.setState({ email });
+    loadLoginInfo();
+  }, []);
+
+  const handleEmailChange = (email) => {
+    setEmail(email);
   };
 
-  handlePasswordChange = (password) => {
-    this.setState({ password });
+  const handlePasswordChange = (password) => {
+    setPassword(password);
   };
-//Xử lí sự kiện khi người dùng thay đổi value
-  handleRememberLoginChange = () => {
-    this.setState(prevState => ({ rememberLogin: !prevState.rememberLogin }));
+
+  const handleRememberLoginChange = () => {
+    setRememberLogin(!rememberLogin);
   };
-//nhớ mã đăng nhập và update state tương ứng
-  handleLoginPress = () => {
-    const { email, password, rememberLogin } = this.state;
 
-    // Perform login authentication here
+  const handleLoginPress = async () => {
+    //Gửi yêu cầu POST đến URL bằng API.
+    try {
+      const response = await fetch('http://192.168.1.117:3000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password
+        }),
+      });
 
-    // For example:
-    if (email === 'example@mail.com' && password === 'password') {
-      this.setState({ loginError: false });
-
-      // Save login info to storage if "remember login" is checked
-      if (rememberLogin) {
-        AsyncStorage.setItem('email', email);
-        AsyncStorage.setItem('password', password);
+      if (response.ok) {
+        console.log('Signin successful');
+        // Navigate to the home screen
+        navigation.navigate('MainDeviceScreen', { email });
       } else {
-        AsyncStorage.removeItem('email');
-        AsyncStorage.removeItem('password');
+        console.error('Invalid email or password');
       }
-
-      this.props.navigation.navigate('Dashboard'); // Navigate to Dashboard screen
-    } else {
-      this.setState({ loginError: true });
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  handleForgotPasswordPress = () => {
+
+  const handleForgotPasswordPress = () => {
     // Navigate to forgot password screen
     // For example:
-    this.props.navigation.navigate('ForgotPassword');
+    navigation.navigate('ForgotPassScreen');
   };
 
-  handleSignUpPress = () => {
+  const handleSignUpPress = () => {
     // Navigate to sign up screen
     // For example:
-    this.props.navigation.navigate('SignUp');
+    navigation.navigate('SignUpScreen');
   };
-//khi người dùng quên mật khẩu hoặc đăng ký
-  render() {
-    return (
-      <KeyboardAvoidingView style={styles.container} behavior="padding" enabled>
-        <Image style={styles.logo} source={require("./assets/smart.png")} resizeMode='contain' />
+
+  return (
+    
+      <LinearGradient
+      colors={['#ffffff', '#ff4d4d']}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 0.8 }}
+      style={styles.container}
+    >
+        <Image style={styles.logo} source={logo} resizeMode='contain' />
         <Text style={styles.header}>One Piece</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={this.state.email}
-          onChangeText={this.handleEmailChange}
-          autoCapitalize="none"
-          keyboardType="email-address"
+        <Input
+          placeholder='Email'
+          value={email}
+          onChangeText={handleEmailChange}
+          autoCapitalize='none'
+          keyboardType='email-address'
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={this.state.password}
-          onChangeText={this.handlePasswordChange}
+        <Input
+          placeholder='Password'
+          value={password}
+          onChangeText={handlePasswordChange}
           secureTextEntry
         />
         <View style={styles.rememberLoginContainer}>
-          <TouchableOpacity onPress={this.handleRememberLoginChange}>
-            {this.state.rememberLogin ?
-              <Image style={styles.checkboxIcon} source={require("./assets/check.png")} resizeMode='contain' /> :
-              <Image style={styles.checkboxIcon} source={require("./assets/icon.png")} resizeMode='contain' />}
+          <TouchableOpacity onPress={handleRememberLoginChange}>
+            {rememberLogin ?
+              <Image style={styles.checkboxIcon} source={require("../assets/check.png")} resizeMode='contain' /> :
+              <Image style={styles.checkboxIcon} source={require("../assets/icon.png")} resizeMode='contain' />}
           </TouchableOpacity>
           <Text style={styles.rememberLoginText}>Remember me</Text>
         </View>
-        {this.state.loginError && <Text style={styles.error}>Invalid email or password</Text>}
-        <TouchableOpacity style={styles.buttonContainer} onPress={this.handleLoginPress}>
+        {loginError && <Text style={styles.error}>Invalid email or password</Text>}
+        <TouchableOpacity style={styles.buttonContainer} onPress={handleLoginPress}>
           <Text style={styles.buttonText}>Sign in!</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={this.handleForgotPasswordPress}>
+        <TouchableOpacity onPress={handleForgotPasswordPress}>
           <Text style={styles.forgotPassword}>Forgot password?</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={this.handleSignUpPress}>
+        <TouchableOpacity onPress={handleSignUpPress}>
           <Text style={styles.signUp}>Don't have an account? Sign up!</Text>
         </TouchableOpacity>
-      </KeyboardAvoidingView>
-    );
-  }
-}
+      </LinearGradient>
+   
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -127,27 +134,16 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 200,
+    height: 200,
     marginTop: 50,
-   
   },
   header: {
-    fontSize: 50,
+    fontSize: 40,
     color: '#202060',
     marginBottom: 30,
     fontWeight: 'bold',
     //textTransform: 'uppercase',
-  },
-  input: {
-    width: '100%',
-    height: 45,
-    borderRadius: 30,
-    backgroundColor: '#FFFFFF',
-    borderColor: '#F5FCFF',
-    borderWidth: 1,
-    marginBottom: 15,
-    paddingLeft: 20
   },
   rememberLoginContainer: {
     flexDirection: 'row',

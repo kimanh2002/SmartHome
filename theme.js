@@ -1,10 +1,11 @@
 const colors = {
-  accent: '#FA754C',
+  background3: '#FA754C',
   black: '#292934',
   white: '#FFFFFF',
-  gray: '#A7A7A7',
-  gray2: '#ECEDEF',
+  background2: '#A7A7A7',
+  background4: '#ECEDEF',
   button: '#F4F5F7',
+  primary:'#ff6666',
 };
 
 const sizes = {

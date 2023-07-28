@@ -1,103 +1,121 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity } from 'react-native';
+import smart from '../assets/smart.png';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+const SignUpScreen = ({ navigation }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
 
-class SignUpScreen extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      name: '',
-      email: '',
-      password: '',
-      phoneNumber: ''
-    };
-  }
-
-  handleNameChange = (name) => {
-    this.setState({ name });
+  const handleNameChange = (name) => {
+    setName(name);
   };
 
-  handleEmailChange = (email) => {
-    this.setState({ email });
+  const handleEmailChange = (email) => {
+    setEmail(email);
   };
 
-  handlePasswordChange = (password) => {
-    this.setState({ password });
+  const handlePasswordChange = (password) => {
+    setPassword(password);
   };
 
-  handlePhoneNumberChange = (phoneNumber) => {
-    this.setState({ phoneNumber });
+  const handlePhoneNumberChange = (phoneNumber) => {
+    setPhoneNumber(phoneNumber);
   };
 
-  handleSignUpPress = () => {
-    // Perform sign up here
+  const handleSignUpPress = async () => {
+    try {
+      const response = await fetch('http://192.168.1.117:3000/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          phoneNumber
+        }),
+      });
+
+      if (response.ok) {
+        console.log('Signup successful');
+        await AsyncStorage.setItem('email', email);
+        await AsyncStorage.setItem('password', password);
+        // Navigate to the login screen
+        navigation.navigate('LoginScreen');
+      } else {
+        console.error('Failed to signup');
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  handleSignInPress = () => {
-    this.props.navigation.navigate('SignIn'); // Navigate to SignIn screen
+  const handleSignInPress = () => {
+    navigation.navigate('LoginScreen');
   };
 
-  render() {
-    return (
-      <View style={styles.container}>
-        <Image style={styles.logo} source={require("./assets/smart.png")} resizeMode='contain' />
-        <Text style={styles.header}>Sign Up</Text>
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Full Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your full name"
-            value={this.state.name}
-            onChangeText={this.handleNameChange}
-            autoCapitalize="words"
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Email Address</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email address"
-            value={this.state.email}
-            onChangeText={this.handleEmailChange}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            value={this.state.password}
-            onChangeText={this.handlePasswordChange}
-            secureTextEntry
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Phone Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your phone number"
-            value={this.state.phoneNumber}
-            onChangeText={this.handlePhoneNumberChange}
-            keyboardType="phone-pad"
-            maxLength={11}
-          />
-        </View>
-        <TouchableOpacity style={styles.buttonContainer} onPress={this.handleSignUpPress}>
-          <Text style={styles.buttonText}>Sign up!</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={this.handleSignInPress}>
-          <Text style={styles.signIn}>Already have an account? Sign in!</Text>
-        </TouchableOpacity>
+  return (
+    <View style={styles.container}>
+      <Image style={styles.logo} source={smart} resizeMode='contain' />
+      <Text style={styles.header}>Sign Up</Text>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Full Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your full name"
+          value={name}
+          onChangeText={handleNameChange}
+          autoCapitalize="words"
+        />
       </View>
-    );
-  }
-}
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Email Address</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your email address"
+          value={email}
+          onChangeText={handleEmailChange}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+      </View>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Password</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your password"
+          value={password}
+          onChangeText={handlePasswordChange}
+          secureTextEntry
+        />
+      </View>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Phone Number</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your phone number"
+          value={phoneNumber}
+          onChangeText={handlePhoneNumberChange}
+          keyboardType="phone-pad"
+          maxLength={11}
+        />
+      </View>
+      <TouchableOpacity style={styles.buttonContainer} onPress={handleSignUpPress}>
+        <Text style={styles.buttonText}>Sign up!</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleSignInPress}>
+        <Text style={styles.signIn}>Already have an account? Sign in!</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
-    flex: 0.35,
+    flex: 1,
     alignItems: 'center',
     backgroundColor: '#ff9999',
     padding: 5,
