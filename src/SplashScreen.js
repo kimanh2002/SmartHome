@@ -13,7 +13,7 @@ const SplashScreen = ({ navigation }) => {
     setTimeout(() => {
       setLoading(false);
       navigation.navigate('LoginScreen');
-    }, 5000);
+    }, 3000);
   }, []);
 
   return (

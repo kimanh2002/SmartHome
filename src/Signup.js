@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, Alert } from 'react-native';
 import smart from '../assets/smart.png';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { FireBaseConfigAPP } from "../firebase/FireBaseConfigAPP";
+
 const SignUpScreen = ({ navigation }) => {
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-
-  const handleNameChange = (name) => {
-    setName(name);
-  };
 
   const handleEmailChange = (email) => {
     setEmail(email);
@@ -20,37 +16,40 @@ const SignUpScreen = ({ navigation }) => {
     setPassword(password);
   };
 
-  const handlePhoneNumberChange = (phoneNumber) => {
-    setPhoneNumber(phoneNumber);
-  };
-
-  const handleSignUpPress = async () => {
-    try {
-      const response = await fetch('http://192.168.1.117:3000/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          phoneNumber
-        }),
+  const handleSignUpPress = () => {
+    const auth = getAuth(FireBaseConfigAPP);
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        updateProfile(auth.currentUser, {
+          displayName: 'N/A',
+          photoURL: 'N/A'
+        })
+          .then(() => {
+            Alert.alert(
+              "Đăng ký thành công",
+              `Đăng ký thành công ${email}`,
+              [
+                {
+                  text: "Cancel",
+                  onPress: () => console.log("Cancel Pressed"),
+                  style: "cancel",
+                },
+                { text: "OK", onPress: () => navigation.navigate('LoginScreen') },
+              ]
+            );
+            setEmail('');
+            setPassword('');
+          })
+          .catch((error) => {
+            console.log("Failed to update profile");
+          });
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.log("Failed to signUp");
       });
-
-      if (response.ok) {
-        console.log('Signup successful');
-        await AsyncStorage.setItem('email', email);
-        await AsyncStorage.setItem('password', password);
-        // Navigate to the login screen
-        navigation.navigate('LoginScreen');
-      } else {
-        console.error('Failed to signup');
-      }
-    } catch (error) {
-      console.error(error);
-    }
   };
 
   const handleSignInPress = () => {
@@ -60,22 +59,12 @@ const SignUpScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Image style={styles.logo} source={smart} resizeMode='contain' />
-      <Text style={styles.header}>Sign Up</Text>
+      <Text style={styles.header}>Đăng ký</Text>
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Full Name</Text>
+        <Text style={styles.inputLabel}>Email</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your full name"
-          value={name}
-          onChangeText={handleNameChange}
-          autoCapitalize="words"
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Email Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your email address"
+          placeholder="Nhập email"
           value={email}
           onChangeText={handleEmailChange}
           keyboardType="email-address"
@@ -83,31 +72,20 @@ const SignUpScreen = ({ navigation }) => {
         />
       </View>
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Password</Text>
+        <Text style={styles.inputLabel}>Mật khẩu</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your password"
+          placeholder="Nhập mật khẩu"
           value={password}
           onChangeText={handlePasswordChange}
           secureTextEntry
         />
       </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Phone Number</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your phone number"
-          value={phoneNumber}
-          onChangeText={handlePhoneNumberChange}
-          keyboardType="phone-pad"
-          maxLength={11}
-        />
-      </View>
       <TouchableOpacity style={styles.buttonContainer} onPress={handleSignUpPress}>
-        <Text style={styles.buttonText}>Sign up!</Text>
+        <Text style={styles.buttonText}>Đăng ký</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={handleSignInPress}>
-        <Text style={styles.signIn}>Already have an account? Sign in!</Text>
+        <Text style={styles.signIn}>Đã có tài khoản? Đăng nhập!</Text>
       </TouchableOpacity>
     </View>
   );
@@ -124,14 +102,12 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     marginTop: -10,
-   
   },
   header: {
     fontSize: 40,
     color: '#202060',
     marginBottom: 30,
     fontWeight: 'bold',
-    //textTransform: 'uppercase',
   },
   inputContainer: {
     width: '90%',
@@ -172,3 +148,4 @@ const styles = StyleSheet.create({
 });
 
 export default SignUpScreen;
+

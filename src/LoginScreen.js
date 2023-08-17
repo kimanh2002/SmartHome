@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Image, KeyboardAvoidingView, TouchableOpacity} from 'react-native';
+import { Text, View, StyleSheet, Image, KeyboardAvoidingView, TouchableOpacity, Alert } from 'react-native';
 import { Input } from 'react-native-elements';
 import { LinearGradient } from 'expo-linear-gradient';
-import {AsyncStorage} from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { FireBaseConfigAPP } from '../firebase/FireBaseConfigAPP';
 import logo from '../assets/logo.jpg';
+
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -11,7 +14,7 @@ const LoginScreen = ({ navigation }) => {
   const [loginError, setLoginError] = useState(false);
 
   useEffect(() => {
-    // Load saved login info from storage (if any)
+    // Load saved login information from AsyncStorage (if any)
     async function loadLoginInfo() {
       try {
         const savedEmail = await AsyncStorage.getItem('email');
@@ -42,87 +45,77 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleLoginPress = async () => {
-    //Gửi yêu cầu POST đến URL bằng API.
-    try {
-      const response = await fetch('http://192.168.1.117:3000/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password
-        }),
-      });
+    const auth = getAuth(FireBaseConfigAPP);
 
-      if (response.ok) {
-        console.log('Signin successful');
-        // Navigate to the home screen
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        // Save login information to AsyncStorage if rememberLogin is set
+        if (rememberLogin) {
+          AsyncStorage.setItem('email', email);
+          AsyncStorage.setItem('password', password);
+        } else {
+          AsyncStorage.removeItem('email');
+          AsyncStorage.removeItem('password');
+        }
+
+        setLoginError(false);
         navigation.navigate('MainDeviceScreen', { email });
-      } else {
-        console.error('Invalid email or password');
-      }
-    } catch (error) {
-      console.error(error);
-    }
+      })
+      .catch((error) => {
+        setLoginError(true);
+        console.log('Invalid email or password');
+      });
   };
 
-
   const handleForgotPasswordPress = () => {
-    // Navigate to forgot password screen
-    // For example:
     navigation.navigate('ForgotPassScreen');
   };
 
   const handleSignUpPress = () => {
-    // Navigate to sign up screen
-    // For example:
     navigation.navigate('SignUpScreen');
   };
 
   return (
-    
-      <LinearGradient
+    <LinearGradient
       colors={['#ffffff', '#ff4d4d']}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 0.8 }}
       style={styles.container}
     >
-        <Image style={styles.logo} source={logo} resizeMode='contain' />
-        <Text style={styles.header}>One Piece</Text>
-        <Input
-          placeholder='Email'
-          value={email}
-          onChangeText={handleEmailChange}
-          autoCapitalize='none'
-          keyboardType='email-address'
-        />
-        <Input
-          placeholder='Password'
-          value={password}
-          onChangeText={handlePasswordChange}
-          secureTextEntry
-        />
-        <View style={styles.rememberLoginContainer}>
-          <TouchableOpacity onPress={handleRememberLoginChange}>
-            {rememberLogin ?
-              <Image style={styles.checkboxIcon} source={require("../assets/check.png")} resizeMode='contain' /> :
-              <Image style={styles.checkboxIcon} source={require("../assets/icon.png")} resizeMode='contain' />}
-          </TouchableOpacity>
-          <Text style={styles.rememberLoginText}>Remember me</Text>
-        </View>
-        {loginError && <Text style={styles.error}>Invalid email or password</Text>}
-        <TouchableOpacity style={styles.buttonContainer} onPress={handleLoginPress}>
-          <Text style={styles.buttonText}>Sign in!</Text>
+      <Image style={styles.logo} source={logo} resizeMode='contain' />
+      <Text style={styles.header}>One Piece</Text>
+      <Input
+        placeholder='Email'
+        value={email}
+        onChangeText={handleEmailChange}
+        autoCapitalize='none'
+        keyboardType='email-address'
+      />
+      <Input
+        placeholder='Password'
+        value={password}
+        onChangeText={handlePasswordChange}
+        secureTextEntry
+      />
+      <View style={styles.rememberLoginContainer}>
+        <TouchableOpacity onPress={handleRememberLoginChange}>
+          {rememberLogin ?
+            <Image style={styles.checkboxIcon} source={require("../assets/check.png")} resizeMode='contain' /> :
+            <Image style={styles.checkboxIcon} source={require("../assets/icon.png")} resizeMode='contain' />}
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleForgotPasswordPress}>
-          <Text style={styles.forgotPassword}>Forgot password?</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleSignUpPress}>
-          <Text style={styles.signUp}>Don't have an account? Sign up!</Text>
-        </TouchableOpacity>
-      </LinearGradient>
-   
+        <Text style={styles.rememberLoginText}>Remember me</Text>
+      </View>
+      {loginError && <Text style={styles.error}>Invalid email or password</Text>}
+      <TouchableOpacity style={styles.buttonContainer} onPress={handleLoginPress}>
+        <Text style={styles.buttonText}>Sign in!</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleForgotPasswordPress}>
+        <Text style={styles.forgotPassword}>Forgot password?</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleSignUpPress}>
+        <Text style={styles.signUp}>Don't have an account? Sign up!</Text>
+      </TouchableOpacity>
+    </LinearGradient>
   );
 };
 
@@ -188,4 +181,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-

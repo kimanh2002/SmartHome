@@ -4,12 +4,7 @@
     "slug": "IOTApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
+    "icon": "./assets/logo.jpg",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -17,14 +12,23 @@
       "supportsTablet": true
     },
     "android": {
-      
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-        
+        "foregroundImage": "./assets/logo.jpg"
       },
-      "permissions": ["ACCESS_FINE_LOCATION"]
-      
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "INTERNET",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "package": "com.nguyenkimanh.IOTApp"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "87549f09-8afd-4ad6-bc36-2c0c2bd81bb8"
+      }
     }
   }
 }

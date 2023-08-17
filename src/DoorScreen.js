@@ -1,44 +1,69 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import Icons from 'react-native-vector-icons/MaterialIcons';
-const App = () => {
-  const [unlockMethod, setUnlockMethod] = useState('');
+import moment from 'moment';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import {
+  getDatabase,
+  ref,
+  onValue,
+  set,
+  push,
+} from "firebase/database";
+import { FireBaseConfigAPP } from "../firebase/FireBaseConfigAPP";
 
-  const unlockDoor = (method) => {
-    setUnlockMethod(method);
-    // Thực hiện logic mở khóa dựa trên phương pháp đã chọn
-    console.log('Unlocking door using:', method);
+const App = () => {
+  const [isDoorOpen, setDoorOpen] = useState(true);
+
+  // Kết nối tới Firebase Realtime Database
+  const db = getDatabase(FireBaseConfigAPP);
+
+  // Hàm để lấy giá trị từ Firebase Realtime Database
+  const getDoorStatusFromDatabase = () => {
+    const doorRef = ref(db, "Nha_A/Room4/Door");
+
+    onValue(doorRef, (snapshot) => {
+      const doorStatus = snapshot.val();
+      if (typeof doorStatus === "boolean") {
+        setDoorOpen(doorStatus);
+      }
+    });
+  };
+
+  // Hàm để thay đổi giá trị trên Firebase Realtime Database
+  const changeDoorStatusOnFirebase = (newStatus) => {
+    const doorRef = ref(db, "Nha_A/Room4/Door");
+    
+    set(doorRef, newStatus).then(() => {
+      // Cập nhật trạng thái thành công, ghi lịch sử
+      const historyRef = ref(db, "Nha_A/history");
+      const newHistoryItem = {
+        timestamp: moment().format('YYYY-MM-DD HH:mm:ss'),
+        action: `Door ${newStatus ? 'Opened' : 'Closed'}`,
+      };
+      push(historyRef, newHistoryItem).then(() => {
+        // Ghi lịch sử thành công!
+      });
+    });
+  };
+
+  // Hàm xử lý khi người dùng ấn vào nút
+  const handleButtonPress = () => {
+    const newStatus = isDoorOpen ? 0 : 1;
+    
+    // Gọi hàm để thay đổi giá trị trên Firebase Realtime Database
+    changeDoorStatusOnFirebase(newStatus);
+    
+    // Cập nhật trạng thái trong ứng dụng
+    setDoorOpen(newStatus);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.frame}>
         <Text style={styles.title}>Smart Lock</Text>
-        <Image source={require('../assets/lock.png')} style={styles.logo} />
-        <Text>Unlock Method: {unlockMethod}</Text>
-        <View style={styles.gridContainer}>
-          <View style={styles.row}>
-            <TouchableOpacity style={styles.button} onPress={() => unlockDoor('Bluetooth')}>
-              <Icon name="bluetooth" size={24} color="#000000" />
-              <Text style={styles.buttonText}>Bluetooth</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => unlockDoor('Remote Wifi')}>
-              <Icon name="wifi" size={24} color="#000000" />
-              <Text style={styles.buttonText}>Wifi</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.row}>
-            <TouchableOpacity style={styles.button} onPress={() => unlockDoor('Face Recognition')}>
-              <Icons name="face" size={24} color="#000000" />
-              <Text style={styles.buttonText}>Face Recognition</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => unlockDoor('History')}>
-              <Icon name="time" size={24} color="#000000" />
-              <Text style={styles.buttonText}>Unlock History</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <Text>Door Status: {isDoorOpen ? 'Open' : 'Closed'}</Text>
+        <TouchableOpacity style={styles.button} onPress={handleButtonPress}>
+          <Text style={styles.buttonText}>{isDoorOpen ? 'Close Door' : 'Open Door'}</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -58,46 +83,23 @@ const styles = StyleSheet.create({
     padding: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -21,
   },
   title: {
     fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
-  },
-  gridContainer: {
-    width: '100%',
-    marginTop: 40,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
   button: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
-    backgroundColor: '#ffff',
-    borderWidth: 5,
-    borderColor: '#ff8080',
-    
-    padding: 10,
+    backgroundColor: '#ff8080',
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     borderRadius: 4,
-    marginBottom: 20,
-    marginRight: 10,
+    marginTop: 20,
   },
   buttonText: {
-    color: '#000000',
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 10,
   },
 });
 

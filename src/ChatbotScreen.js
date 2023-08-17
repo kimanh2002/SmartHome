@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
-
+import {
+  getDatabase,
+  ref,
+  onValue,
+  set,
+  push,
+} from "firebase/database";
+import { FireBaseConfigAPP } from "../firebase/FireBaseConfigAPP";
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
-
+  // Kết nối tới Firebase Realtime Database
+  const dbRef = getDatabase(FireBaseConfigAPP);
   const handleUserResponse = (newMessages = []) => {
     setMessages((prevMessages) => GiftedChat.append(prevMessages, newMessages));
 
